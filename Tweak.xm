@@ -1,3 +1,8 @@
+#import <UIKit/UIKeyboardCache.h>
+#import <AppSupport/CPBitmapStore.h>
+
+#pragma mark - Keyboard hooks
+
 BOOL override = NO;
 
 @interface UIKBRenderConfig : NSObject
@@ -51,3 +56,28 @@ BOOL override = NO;
 }
 
 %end
+
+#pragma mark - SpringBoard hooks
+
+%group SpringBoardHooks
+%hook SpringBoard
+
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+	%orig;
+
+	CPBitmapStore *store = MSHookIvar<CPBitmapStore *>([%c(UIKeyboardCache) sharedInstance], "_store");
+	[store purge];
+}
+
+%end
+%end
+
+#pragma mark - Constructor
+
+%ctor {
+	if (IN_SPRINGBOARD) {
+		%init(SpringBoardHooks);
+	}
+
+	%init;
+}

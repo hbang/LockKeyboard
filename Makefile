@@ -2,7 +2,7 @@ include theos/makefiles/common.mk
 
 TWEAK_NAME = LockKeyboard
 LockKeyboard_FILES = Tweak.xm
-LockKeyboard_PRIVATE_FRAMEWORKS = SpringBoardUI
+LockKeyboard_PRIVATE_FRAMEWORKS = AppSupport
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

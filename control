@@ -1,7 +1,7 @@
 Package: ws.hbang.lockkeyboard
 Name: LockKeyboard
 Depends: mobilesubstrate, firmware (>= 7.1)
-Version: 1.0~beta1
+Version: 1.0~beta2
 Architecture: iphoneos-arm
 Description: Lock screen style keyboard everywhere
 Maintainer: HASHBANG Productions <support@hbang.ws>
