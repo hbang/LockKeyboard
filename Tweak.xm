@@ -1,83 +1,58 @@
-#import <UIKit/UIKeyboardCache.h>
-#import <AppSupport/CPBitmapStore.h>
+#import <UIKit/UIKBRenderConfig.h>
+#import <UIKit/UIKeyboardLayoutStar.h>
+#import <UIKit/UIWindow+Private.h>
 
-#pragma mark - Keyboard hooks
+#define UIKeyboardAppearancePasscode 127
 
-BOOL override = NO;
+#pragma mark - Prevent from modifying real passcode keyboard
 
-@interface UIKBRenderConfig : NSObject
+BOOL isActuallyLockScreen() {
+	return %c(SBUIPasscodeTextField) && [UIApplication sharedApplication].keyWindow.firstResponder.class == %c(SBUIPasscodeTextField);
+}
 
-+ (instancetype)defaultConfig;
+#pragma mark - Change keyboard appearance
 
-@end
+%hook UIKeyboardLayoutStar
 
-@interface UIKBRenderFactoryiPhonePasscode : UIKBRenderConfig
-
-@end
-
-%hook UIKBRenderFactoryiPhone
-
-+ (id)alloc {
-	if (override) {
-		override = NO;
-		return %orig;
-	} else {
-		return [%c(UIKBRenderFactoryiPhonePasscode) alloc];
+- (void)showKeyboardWithInputTraits:(id<UITextInputTraits>)inputTraits screenTraits:(id)screenTraits splitTraits:(id)splitTraits {
+	if (inputTraits.keyboardAppearance != UIKeyboardAppearancePasscode) {
+		inputTraits.keyboardAppearance = UIKeyboardAppearancePasscode;
 	}
+
+	%orig;
 }
 
 %end
 
-%hook UIKBRenderFactoryiPhonePasscode
-
-+ (id)alloc {
-	override = YES;
-	return %orig;
-}
-
-%end
-
-/*
- this is one of those "i don't know why it works but it works" things.
-*/
+#pragma mark - Fix outline alpha
 
 %hook UIKBRenderConfig
 
-+ (UIKBRenderConfig *)darkConfig {
-	return [self defaultConfig];
-}
-
-- (BOOL)lightKeyboard {
-	return NO;
-}
-
 - (double)keycapOpacity {
-	return 0.2f;
+	return isActuallyLockScreen() ? %orig : 0.4f;
 }
 
 %end
 
-#pragma mark - SpringBoard hooks
+#pragma mark - Hack to bring back dictation
 
-%group SpringBoardHooks
-%hook SpringBoard
+BOOL dictationHack = NO;
 
-- (void)applicationDidFinishLaunching:(UIApplication *)application {
-	%orig;
+%hook UIDictationController
 
-	CPBitmapStore *store = MSHookIvar<CPBitmapStore *>([%c(UIKeyboardCache) sharedInstance], "_store");
-	[store purge];
++ (BOOL)fetchCurrentInputModeSupportsDictation {
+	dictationHack = YES;
+	BOOL result = %orig;
+	dictationHack = NO;
+	return result;
 }
 
 %end
-%end
 
-#pragma mark - Constructor
+%hook UITextInputTraits
 
-%ctor {
-	if (IN_SPRINGBOARD) {
-		%init(SpringBoardHooks);
-	}
-
-	%init;
+- (UIKeyboardAppearance)keyboardAppearance {
+	return dictationHack && !isActuallyLockScreen() ? 0 : %orig;
 }
+
+%end
