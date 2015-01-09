@@ -1,19 +1,15 @@
-#import <UIKit/UIKeyboardCache.h>
 #import <AppSupport/CPBitmapStore.h>
+#import <UIKit/UIKeyboardCache.h>
+#import <UIKit/UIKBRenderConfig.h>
+#import <UIKit/UIKBRenderFactoryiPhonePasscode.h>
+#import <UIKit/UIKBRenderFactoryiPadPasscode.h>
+#import <UIKit/UIKBRenderFactoryiPadLandscapePasscode.h>
 
 #pragma mark - Keyboard hooks
 
 BOOL override = NO;
 
-@interface UIKBRenderConfig : NSObject
-
-+ (instancetype)defaultConfig;
-
-@end
-
-@interface UIKBRenderFactoryiPhonePasscode : UIKBRenderConfig
-
-@end
+#pragma mark - iPhone
 
 %hook UIKBRenderFactoryiPhone
 
@@ -28,6 +24,22 @@ BOOL override = NO;
 
 %end
 
+%hook UIKBRenderFactoryiPad
+
++ (id)alloc {
+	return override ? %orig : [%c(UIKBRenderFactoryiPadPasscode) alloc];
+}
+
+%end
+
+%hook UIKBRenderFactoryiPadLandscape
+
++ (id)alloc {
+	return override ? %orig : [%c(UIKBRenderFactoryiPadLandscapePasscode) alloc];
+}
+
+%end
+
 %hook UIKBRenderFactoryiPhonePasscode
 
 + (id)alloc {
@@ -36,6 +48,26 @@ BOOL override = NO;
 }
 
 %end
+
+%hook UIKBRenderFactoryiPadPasscode
+
++ (id)alloc {
+	override = YES;
+	return %orig;
+}
+
+%end
+
+%hook UIKBRenderFactoryiPadLandscapePasscode
+
++ (id)alloc {
+	override = YES;
+	return %orig;
+}
+
+%end
+
+#pragma mark - Render config
 
 /*
  this is one of those "i don't know why it works but it works" things.
